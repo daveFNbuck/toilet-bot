@@ -11,8 +11,8 @@
 
 RF24* radio;
 int TOILET = 0; // Make this unique for each sensor
-int CHANNEL = 0x60;
-int PIPE = 0x7272727069;
+uint8_t CHANNEL = 0x60;
+uint64_t PIPE = 0x7272727069;
 
 void setup() {
   Serial.begin(9600);
