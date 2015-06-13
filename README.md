@@ -2,17 +2,36 @@
 Toilet bot is a system of Arduino sensors that report bathroom stall availability to a Raspberry Pi. This information is then posted to Slack.
 
 ## Sensor setup
+### Hardware
 The Arduino sensors are fairly simple and consist of three components:
   - an Arduino (built on a [breadboard](https://www.virtuabotix.com/product-bareduino328-barebones-microcontroller-guide/) for battery efficiency)
   - a [magnetic switch](http://www.amazon.com/Directed-Electronics-8601-Magnetic-Switch/dp/B0009SUF08)
   - an [NRF24L01+](http://www.amazon.com/s/?field-keywords=nrf24l01%2B) wireless transceiver
 
-Diagram for wiring these up together coming soon.
+Once you've wired everything up, it'll look something like this:
+![sensor circuit](diagrams/toilet_sensor.png)
 
-You'll need to install the following libraries by copying them into your Arduino installation's libraries directory:
+The blue object sticking out the bottom represents the magnetic switch. One of the wires attaches to the screw labeled COM and the other to the screw labeled NO (for normally open, which the door should be). The pulldown resistor connecting the 4th pin to ground should have relatively large resistance, as this will be the main source of current when the door is closed. I used a 10k resistor, but larger resistances should be ok too.
+
+To connect the NRF24L01, the top-left pin on the atmega328 in the above diagram is pin 15, and pins increase on the left side going down. Connect the pins to the transceiver as follows:
+
+atmega328 pin | NRF24L01+ pin
+--------------|--------------
+15 | CSN
+16 | CE
+17 | MOSI
+18 | MISO
+19 | SCK
+20 | VCC
+22 | GND
+
+Note that atmega328 pin 21 is not used, nor is the IRQ pin on the NRF24L01. Your wiring may not look exactly like in the diagram, as different manufacturers can produce different pin layouts for the NRF24L01. The pins on mine are a mirror image of the one in the diagram, for example.
+
+### Software
+Once the device is all wired up, you'll need to install the following libraries by copying them into your Arduino installation's libraries directory:
   - [Low-Power](https://github.com/rocketscream/Low-Power)
   - [NR24](https://github.com/tmrh20/RF24/)
-Next, just load [sensor.ino](sensor/sensor.ino) into the Arduino program to compile and [upload](http://www.arduino.cc/en/Tutorial/ArduinoToBreadboard) it onto the chip.
+Next, just load [sensor.ino](sensor/sensor.ino) into the Arduino program to compile and [upload](http://www.arduino.cc/en/Tutorial/ArduinoToBreadboard) it onto the chip. Once the code is loaded, check the serial monitor to see if it displays reasonable-looking setup information for the transciever.
 
 Once the hardware and software are setup, attach the magnet sensor to the bathroom door such that it closes the circuit only when the door is closed. Note that this sensor only works if the door is normally open when not occupied. You may need to modify the bathroom door if this is not the case. Try to attach these near the top of the door if possible so that your antenna can be placed as high as possible. If you have a metal stall, you'll want to place the antenna so that the stall doors and wall don't block its path to the receiver on the Raspberry Pi.
 
