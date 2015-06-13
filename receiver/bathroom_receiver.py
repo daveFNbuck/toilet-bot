@@ -17,8 +17,7 @@ GPIO.setmode(GPIO.BCM)
 
 with open(os.path.join(os.path.dirname(__file__), 'slack_conf.yaml')) as conf:
     CONF = yaml.load(conf)
-SLACK_URL = 'https://houzz.slack.com/services/hooks/incoming-webhook?token=%(webhook_token)s' % CONF
-SLACK_CHANNEL = '#toilet-bot'
+
 CHANNEL_TOPIC_URL = 'https://slack.com/api/channels.setTopic?token=%(api_token)s&channel=%(channel)s&topic=' % CONF
 
 SQL_WRITE = 'INSERT INTO `availability` (`toilet`, `occupied`, `time`) VALUES (%s, %s, NOW())'
