@@ -31,6 +31,7 @@ Note that atmega328 pin 21 is not used, nor is the IRQ pin on the NRF24L01. Your
 Once the device is all wired up, you'll need to install the following libraries by copying them into your Arduino installation's libraries directory:
   - [Low-Power](https://github.com/rocketscream/Low-Power)
   - [NR24](https://github.com/tmrh20/RF24/)
+
 Next, just load [sensor.ino](sensor/sensor.ino) into the Arduino program to compile and [upload](http://www.arduino.cc/en/Tutorial/ArduinoToBreadboard) it onto the chip. Once the code is loaded, check the serial monitor to see if it displays reasonable-looking setup information for the transciever.
 
 Once the hardware and software are setup, attach the magnet sensor to the bathroom door such that it closes the circuit only when the door is closed. Note that this sensor only works if the door is normally open when not occupied. You may need to modify the bathroom door if this is not the case. Try to attach these near the top of the door if possible so that your antenna can be placed as high as possible. If you have a metal stall, you'll want to place the antenna so that the stall doors and wall don't block its path to the receiver on the Raspberry Pi.
