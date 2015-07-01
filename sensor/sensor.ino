@@ -32,6 +32,7 @@ void setup() {
 
 void handleInterrupt() {
   wdt_disable(); // Disable watchdog timer
+  sendStatus();
 }
 
 void sendStatus() {
