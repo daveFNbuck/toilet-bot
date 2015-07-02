@@ -67,8 +67,6 @@ def post_manager(state):
                 if value != prev_state[toilet]:
                     print 'posting from manager'
                     toilet_post(toilet, value)
-                if value != -1:
-                    GPIO.output(leds[toilet], 1 - value)
             post_status(state_value)
             prev_state = state_value
         time.sleep(2)
@@ -105,4 +103,5 @@ while True:
     radio.read(recv_buffer)
     toilet, status = recv_buffer[0] >> 1, recv_buffer[0] & 1
     message[toilet] = status
+    GPIO.output(leds[toilet], 1 - status)
     print 'message changed:', message[:]
