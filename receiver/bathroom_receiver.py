@@ -43,8 +43,7 @@ radio.printDetails()
 
 radio.startListening()
 
-manager = multiprocessing.Manager()
-message = manager.Array('i', [-1, -1])  # hard-coded for 2 toilets
+message = multiprocessing.Array('i', [-1, -1])  # hard-coded for 2 toilets
 
 
 def chat_msg(state):
