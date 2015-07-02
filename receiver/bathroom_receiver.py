@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import atexit
+import itertools
 import multiprocessing
 import os.path
 import time
@@ -25,6 +26,9 @@ SQL_WRITE = 'INSERT INTO `availability` (`toilet`, `occupied`, `time`) VALUES (%
 NUM_TOILETS = 2
 
 LEDS = [15, 14]
+
+BLINK_HZ = 2
+DEAD_TIMEOUT = 60
 
 
 def chat_msg(state):
@@ -71,6 +75,14 @@ def toilet_post(toilet, status):
         conn.close()
 
 
+def blink_dead_lights(last_heard):
+    for tick in itertools.cycle((0, 1)):
+        for led, timestamp in zip(LEDS, last_heard[:]):
+            if time.time() - timestamp > DEAD_TIMEOUT:
+                GPIO.output(led, tick)
+        time.sleep(1.0 / BLINK_HZ)
+
+
 if __name__ == '__main__':
     for led in LEDS:
         GPIO.setup(led, GPIO.OUT)
@@ -94,6 +106,7 @@ if __name__ == '__main__':
     last_heard = multiprocessing.Array('i', [int(time.time())] * NUM_TOILETS)
 
     multiprocessing.Process(target=post_manager, args=(message,)).start()
+    multiprocessing.Process(target=blink_dead_lights, args=(last_heard,)).start()
 
     while True:
         pipe = [0]
@@ -104,5 +117,6 @@ if __name__ == '__main__':
         radio.read(recv_buffer)
         toilet, status = recv_buffer[0] >> 1, recv_buffer[0] & 1
         message[toilet] = status
+        last_heard[toilet] = int(time.time())
         GPIO.output(LEDS[toilet], 1 - status)
         print 'message changed:', message[:]
