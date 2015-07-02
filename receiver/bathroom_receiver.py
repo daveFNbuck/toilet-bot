@@ -18,32 +18,13 @@ GPIO.setmode(GPIO.BCM)
 with open(os.path.join(os.path.dirname(__file__), 'slack_conf.yaml')) as conf:
     CONF = yaml.load(conf)
 
-CHANNEL_TOPIC_URL = 'https://slack.com/api/channels.setTopic?token=%(api_token)s&channel=%(channel)s&topic=' % CONF
+CHANNEL_TOPIC_URL = 'https://slack.com/api/channels.setTopic?' \
+    'token=%(api_token)s&channel=%(channel)s&topic=' % CONF
 
 SQL_WRITE = 'INSERT INTO `availability` (`toilet`, `occupied`, `time`) VALUES (%s, %s, NOW())'
+NUM_TOILETS = 2
 
-leds = [15, 14]
-
-for led in leds:
-    GPIO.setup(led, GPIO.OUT)
-    GPIO.output(led, 0)
-atexit.register(GPIO.cleanup)
-
-pipes = [[0x72, 0x72, 0x72, 0x70, 0x69], [0xc2, 0xc2, 0xc2, 0xc2, 0xc2]]
-radio = NRF24(GPIO, spidev.SpiDev())
-radio.begin(0, 17)
-
-radio.setPayloadSize(1)
-radio.setChannel(0x60)
-radio.setDataRate(NRF24.BR_250KBPS)
-radio.setPALevel(NRF24.PA_MAX)
-
-radio.openReadingPipe(0, map(ord, 'rrrpi'))
-radio.printDetails()
-
-radio.startListening()
-
-message = multiprocessing.Array('i', [-1, -1])  # hard-coded for 2 toilets
+LEDS = [15, 14]
 
 
 def chat_msg(state):
@@ -70,8 +51,6 @@ def post_manager(state):
             prev_state = state_value
         time.sleep(2)
 
-p = multiprocessing.Process(target=post_manager, args=(message,))
-
 
 def post_status(state):
     msg = chat_msg(state)
@@ -92,15 +71,38 @@ def toilet_post(toilet, status):
         conn.close()
 
 
-p.start()
-while True:
-    pipe = [0]
-    # wait for incoming packet from transmitter
-    while not radio.available(pipe):
-        time.sleep(10000/1000000.0)
-    recv_buffer = []
-    radio.read(recv_buffer)
-    toilet, status = recv_buffer[0] >> 1, recv_buffer[0] & 1
-    message[toilet] = status
-    GPIO.output(leds[toilet], 1 - status)
-    print 'message changed:', message[:]
+if __name__ == '__main__':
+    for led in LEDS:
+        GPIO.setup(led, GPIO.OUT)
+        GPIO.output(led, 0)
+    atexit.register(GPIO.cleanup)
+
+    radio = NRF24(GPIO, spidev.SpiDev())
+    radio.begin(0, 17)
+
+    radio.setPayloadSize(1)
+    radio.setChannel(0x60)
+    radio.setDataRate(NRF24.BR_250KBPS)
+    radio.setPALevel(NRF24.PA_MAX)
+
+    radio.openReadingPipe(0, map(ord, 'rrrpi'))
+    radio.printDetails()
+
+    radio.startListening()
+
+    message = multiprocessing.Array('i', [-1] * NUM_TOILETS)
+    last_heard = multiprocessing.Array('i', [int(time.time())] * NUM_TOILETS)
+
+    multiprocessing.Process(target=post_manager, args=(message,)).start()
+
+    while True:
+        pipe = [0]
+        # wait for incoming packet from transmitter
+        while not radio.available(pipe):
+            time.sleep(0.01)
+        recv_buffer = []
+        radio.read(recv_buffer)
+        toilet, status = recv_buffer[0] >> 1, recv_buffer[0] & 1
+        message[toilet] = status
+        GPIO.output(LEDS[toilet], 1 - status)
+        print 'message changed:', message[:]
