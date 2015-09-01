@@ -19,6 +19,8 @@ GPIO.setmode(GPIO.BCM)
 with open(os.path.join(os.path.dirname(__file__), 'slack_conf.yaml')) as conf:
     CONF = yaml.load(conf)
 
+TOILET_MARKERS = [':green_toilet:', ':red_toilet:']
+
 CHANNEL_TOPIC_URL = 'https://slack.com/api/channels.setTopic?' \
     'token=%(api_token)s&channel=%(channel)s&topic=' % CONF
 
@@ -32,14 +34,7 @@ DEAD_TIMEOUT = 60
 
 
 def chat_msg(state):
-    if all(s == 0 for s in state):
-        return 'both stalls free'
-    elif state[0] == 0:
-        return 'left stall free'
-    elif state[1] == 0:
-        return 'right stall free'
-    else:
-        return 'both stalls occupied'
+    return ''.join(TOILET_MARKERS[i % 2] for i in state)
 
 
 def post_manager(state):
