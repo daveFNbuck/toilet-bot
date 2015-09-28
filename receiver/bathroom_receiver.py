@@ -20,6 +20,7 @@ with open(os.path.join(os.path.dirname(__file__), 'slack_conf.yaml')) as conf:
     CONF = yaml.load(conf)
 
 TOILET_MARKERS = [':green_toilet:', ':red_toilet:']
+DEAD_SENSOR = ':gray_toilet:'
 
 CHANNEL_TOPIC_URL = 'https://slack.com/api/channels.setTopic?' \
     'token=%(api_token)s&channel=%(channel)s&topic=' % CONF
@@ -34,7 +35,14 @@ DEAD_TIMEOUT = 60
 
 
 def chat_msg(state):
-    return ''.join(TOILET_MARKERS[i % 2] for i in state)
+    msg = []
+    dead = set(dead_sensors())
+    for sensor, status in enumerate(state):
+        if sensor in dead or status == -1:
+            msg.append(DEAD_SENSOR)
+        else:
+            msg.append(TOILET_MARKERS[status])
+    return ''.join(msg)
 
 
 def post_manager(state):
@@ -70,11 +78,16 @@ def toilet_post(toilet, status):
         conn.close()
 
 
+def dead_sensors():
+    for sensor, timestamp in enumerate(last_heard[:]):
+        if time.time() - timestamp > DEAD_TIMEOUT:
+            yield sensor
+
+
 def blink_dead_lights(last_heard):
     for tick in itertools.cycle((0, 1)):
-        for led, timestamp in zip(LEDS, last_heard[:]):
-            if time.time() - timestamp > DEAD_TIMEOUT:
-                GPIO.output(led, tick)
+        for sensor in dead_sensors():
+            GPIO.output(LEDS[sensor], tick)
         time.sleep(1.0 / BLINK_HZ)
 
 
