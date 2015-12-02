@@ -27,6 +27,7 @@ void setup() {
 
   radio->openWritingPipe(PIPE);
   radio->printDetails();
+  delay(1000);
   attachInterrupt(0, handleInterrupt, CHANGE);
 }
 
